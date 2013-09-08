@@ -8,15 +8,9 @@ from ..model.client import Client, AuthSession
 from ..model.account import Account
 from ..model.meta import Session
 from ..views import auth_on_token
+from ..views import start_session
 import datetime
 
-class ViewTests(AppTest):
-
-    def test_start_session(self):
-        from ..views import start_session
-        request = testing.DummyRequest()
-        info = start_session(request)
-        self.assertEqual(info, {'id': '12345'})
 
 class AuthTests(TransactionalTest):
     def _auth_fixture(self, created_at=None):
@@ -56,4 +50,53 @@ class AuthTests(TransactionalTest):
         auth_on_token(lambda req: "hi")(request)
         self.assertEquals(request.auth_session, auth_session)
 
+class CreateSessionTest(TransactionalTest):
+    def _client_fixture(self):
+        client = Client(identifier='12345', secret="some secret")
+        Session.add(client)
+        return client
+
+    def test_login_failed_wrong_pw(self):
+        self._client_fixture()
+        request = testing.DummyRequest()
+        request.params['identifier'] = '12345'
+        request.params['secret'] = 'incorrect secret'
+        request.params['account_name'] = 'zzzeek_two'
+
+        self.assertRaises(
+            exc.HTTPForbidden,
+            start_session, request
+        )
+
+    def test_login_failed_no_user(self):
+        request = testing.DummyRequest()
+        request.params['identifier'] = '12345'
+        request.params['secret'] = 'some secret'
+        request.params['account_name'] = 'zzzeek_two'
+
+        self.assertRaises(
+            exc.HTTPForbidden,
+            start_session, request
+        )
+
+    def test_login(self):
+        client = self._client_fixture()
+        request = testing.DummyRequest()
+        request.params['identifier'] = '12345'
+        request.params['secret'] = 'some secret'
+        request.params['account_name'] = 'zzzeek_two'
+
+        response = start_session(request)
+
+        auth_session = Session.query(AuthSession).filter_by(client=client).one()
+        self.assertEquals(response, {"auth_token": auth_session.token})
+        self.assertEquals(auth_session.account.username, "zzzeek_two")
+
+        # second call gives us a new session but same account
+        response = start_session(request)
+        auth_session_2 = Session.query(AuthSession).\
+                            filter_by(client=client).\
+                            order_by(AuthSession.id.desc()).first()
+        assert auth_session_2 is not auth_session
+        assert auth_session_2.account is auth_session.account
 

@@ -24,7 +24,17 @@ def auth_on_token(fn, request):
 
 @view_config(route_name='start_session', renderer='json')
 def start_session(request):
-    return {"id": "12345"}
+    try:
+        identifier, secret = request.params['identifier'], request.params['secret']
+        account_name = request.params['account_name']
+    except KeyError:
+        raise exc.HTTPForbidden()
+    else:
+        session = AuthSession.create(identifier, secret, account_name)
+        if session is None:
+            raise exc.HTTPForbidden()
+        else:
+            return {"auth_token": session.token}
 
 
 @view_config(route_name='withdraw', renderer='json')

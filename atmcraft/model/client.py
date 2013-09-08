@@ -3,6 +3,7 @@ from .meta import SurrogatePK, Base, Column, String, \
 from sqlalchemy.orm import exc
 import os
 import datetime
+from .account import Account
 
 class Client(SurrogatePK, Base):
     __tablename__ = 'client'
@@ -39,6 +40,20 @@ class AuthSession(SurrogatePK, Base):
         except exc.NoResultFound:
             return None
 
+    @classmethod
+    def create(cls, identifier, secret, account_name):
+        try:
+            client = Session.query(Client).filter_by(identifier=identifier).one()
+        except exc.NoResultFound:
+            return None
+        else:
+            if client.secret != secret:
+                return None
+
+        account = Account.as_unique(Session(), username=account_name)
+        auth_session = AuthSession(client, account)
+        Session.add(auth_session)
+        return auth_session
 
 def console(argv=None):
 

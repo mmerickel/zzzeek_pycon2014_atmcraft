@@ -24,6 +24,25 @@ class GUIDTest(TransactionalTest):
             my_guid
         )
 
+class BcryptTypeTest(TransactionalTest):
+    def setUp(self):
+        super(BcryptTypeTest, self).setUp()
+
+        self.bc_table = Table('bc_table', MetaData(),
+                Column('bc_value', BcryptType)
+            )
+
+        self.bc_table.create(Session.bind)
+
+    def test_round_trip(self):
+
+        Session.execute(self.bc_table.insert(), dict(bc_value="hello"))
+
+        result = Session.scalar(select([self.bc_table.c.bc_value]))
+        self.assertEquals(result, "hello")
+        self.assertEquals(result, Password("hello", result))
+        self.assertNotEquals(result, "bye")
+
 
 class PasswordTest(unittest.TestCase):
     def test_password_wrapper_string_cmp(self):

@@ -4,14 +4,22 @@ from .meta import Base, SurrogatePK, \
 
 import uuid
 
-class Account(SurrogatePK, Base):
+class Account(UniqueMixin, SurrogatePK, Base):
     __tablename__ = 'account'
 
-    username = Column(String(20), nullable=False)
+    username = Column(String(20), unique=True, nullable=False)
     balances = relationship(
                         "AccountBalance",
                         collection_class=attribute_mapped_collection("type")
                     )
+
+    @classmethod
+    def unique_hash(cls, *arg, **kw):
+        return cls.username
+
+    @classmethod
+    def unique_filter(cls, query, *arg, **kw):
+        return query.filter(cls.username == kw['username'])
 
     def add_transaction(self, type_, amount):
         balance_type = BalanceType.as_unique(session, name=type_)
