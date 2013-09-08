@@ -1,3 +1,8 @@
+from .meta import Base, SurrogatePK, \
+            Column, relationship, attribute_mapped_collection, String,\
+            Amount, ReferenceCol, GUID, UniqueMixin
+
+import uuid
 
 class Account(SurrogatePK, Base):
     __tablename__ = 'account'
@@ -7,8 +12,6 @@ class Account(SurrogatePK, Base):
                         "AccountBalance",
                         collection_class=attribute_mapped_collection("type")
                     )
-
-    transactions = relationship("Transaction", backref="account")
 
     def add_transaction(self, type_, amount):
         balance_type = BalanceType.as_unique(session, name=type_)
@@ -27,14 +30,18 @@ class Account(SurrogatePK, Base):
 class AccountBalance(SurrogatePK, Base):
     __tablename__ = 'account_balance'
 
+    account_id = ReferenceCol('account')
     balance_type_id = ReferenceCol('balance_type')
     balance = Column(Amount)
-    transaction_id = ReferenceCol("transaction")
+    last_trans_id = Column(GUID())
+
+    transactions = relationship("Transaction", backref="account")
+
 
 class Transaction(SurrogatePK, Base):
     __tablename__ = 'transaction'
 
-    trans_id = Column(UUID(), nullable=False, unique=True)
+    trans_id = Column(GUID(), nullable=False, unique=True)
     client_id = ReferenceCol("client")
     account_balance_id = ReferenceCol("account_balance")
     amount = Column(Amount, nullable=False)

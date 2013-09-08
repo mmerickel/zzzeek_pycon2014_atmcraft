@@ -3,6 +3,7 @@ build/
 dist/
 docs/build/output/
 *.orig
+*.egg-info
 alembic.ini
 tox.ini
 .venv
