@@ -27,10 +27,13 @@ class BcryptType(TypeDecorator):
     """Coerce strings to bcrypted Password objects for the database.
     """
 
-    impl = String(32)
+    impl = String(128)
 
     def process_bind_param(self, value, dialect):
         return Password(value)
+
+    def __repr__(self):
+        return "BcryptType()"
 
 class GUID(TypeDecorator):
     """Platform-independent GUID type.

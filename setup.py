@@ -11,7 +11,8 @@ requires = [
     'bcrypt',
     'sqlalchemy >= 0.9.0',
     'alembic',
-    'psycopg2'
+    'psycopg2',
+    'decorator'
     ]
 
 setup(name='atmcraft',

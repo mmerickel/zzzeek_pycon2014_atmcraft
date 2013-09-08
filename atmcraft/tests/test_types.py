@@ -1,6 +1,29 @@
 import unittest
-from ..model.meta import Password, BcryptType
+from ..model.meta import Password, BcryptType, Session, GUID
 import bcrypt
+from . import TransactionalTest
+from sqlalchemy import Table, Column, MetaData, select
+import uuid
+
+class GUIDTest(TransactionalTest):
+    def setUp(self):
+        super(GUIDTest, self).setUp()
+
+        self.guid_table = Table('guid_table', MetaData(),
+                Column('guid_value', GUID())
+            )
+
+        self.guid_table.create(Session.bind)
+
+    def test_round_trip(self):
+        my_guid = uuid.uuid4()
+        Session.execute(self.guid_table.insert(), dict(guid_value=my_guid))
+
+        self.assertEquals(
+            Session.scalar(select([self.guid_table.c.guid_value])),
+            my_guid
+        )
+
 
 class PasswordTest(unittest.TestCase):
     def test_password_wrapper_string_cmp(self):
