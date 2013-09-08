@@ -4,6 +4,16 @@ class SurrogatePK(object):
     id = Column(Integer, primary_key=True)
 
 class UniqueMixin(object):
+    """Unique object mixin.
+
+    Allows an object to be returned or created as needed based on
+    criterion.
+
+    .. seealso::
+
+        http://www.sqlalchemy.org/trac/wiki/UsageRecipes/UniqueObject
+
+    """
     @classmethod
     def unique_hash(cls, *arg, **kw):
         raise NotImplementedError()

@@ -5,7 +5,7 @@ from pyramid.events import NewRequest, subscriber
 from sqlalchemy import engine_from_config
 
 def setup_app(global_config, **settings):
-
+    """Called when the Pyramid app first runs."""
 
     @subscriber(NewRequest)
     def cleanup_sess(event):
@@ -20,6 +20,8 @@ def setup_app(global_config, **settings):
     Session.configure(bind=engine)
 
 # bind the Session to the current request
+# Convention within Pyramid is to use the ZopeSQLAlchemy extension here,
+# allowing integration into Pyramid's transactional scope.
 Session = scoped_session(sessionmaker(), scopefunc=get_current_request)
 
 Base = declarative_base()

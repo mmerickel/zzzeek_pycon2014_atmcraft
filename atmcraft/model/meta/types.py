@@ -13,6 +13,10 @@ class Password(str):
     Rationale: for an easy string comparison,
     so we can say ``some_password == 'hello123'``
 
+    .. seealso::
+
+        https://pypi.python.org/pypi/bcrypt/
+
     """
 
     def __new__(cls, value, salt=None):
@@ -40,6 +44,10 @@ class GUID(TypeDecorator):
 
     Uses Postgresql's UUID type, otherwise uses
     CHAR(32), storing as stringified hex values.
+
+    .. seealso::
+
+        http://docs.sqlalchemy.org/en/latest/core/types.html#backend-agnostic-guid-type
 
     """
     impl = CHAR

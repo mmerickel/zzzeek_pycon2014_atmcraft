@@ -8,6 +8,12 @@ import unittest
 testing_engine = None
 
 def setup_package():
+    """Set up configuration and a testing engine.
+
+    Run by nosetests when the test suite starts.
+
+    """
+
     fname = pkg_resources.resource_filename("atmcraft", "../development.ini")
     fileConfig(fname)
     config = SafeConfigParser()

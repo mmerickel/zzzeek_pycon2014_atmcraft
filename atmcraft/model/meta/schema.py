@@ -16,6 +16,7 @@ def _pg_utcnow(element, compiler, **kw):
     return "(CURRENT_TIMESTAMP AT TIME ZONE 'utc')::TIMESTAMP WITH TIME ZONE"
 
 
+
 @event.listens_for(Table, "after_parent_attach")
 def timestamp_cols(table, metadata):
     if not table.name.startswith('alembic'):

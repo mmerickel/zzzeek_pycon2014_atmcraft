@@ -5,6 +5,13 @@ from .model.client import AuthSession
 
 @decorator
 def auth_on_token(fn, request):
+    """Check for a valid AuthSession for this user.
+
+    While Pyramid supplies a much more comprehensive system
+    of doing auth/access control, we're keeping it very simple
+    here for the purposes of demonstration.
+
+    """
     try:
         auth_token = request.params['auth_token']
     except KeyError:

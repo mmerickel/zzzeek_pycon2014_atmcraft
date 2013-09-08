@@ -16,13 +16,14 @@ fileConfig(config.config_file_name)
 from atmcraft.model.meta import Base
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+def render_meta_items(type_, obj, autogen_context):
+    """Render custom schema items correctly within an autogenerate.
 
-def render_meta_types(type_, obj, autogen_context):
+    .. seealso::
 
+        https://alembic.readthedocs.org/en/latest/api.html#the-environment-context
+
+    """
     # render types we define in "meta" with the correct
     # module name
     if type_ == "type" and "atmcraft" in obj.__module__:
@@ -65,7 +66,7 @@ def run_migrations_online():
     context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
-                render_item=render_meta_types
+                render_item=render_meta_items
                 )
 
     try:
