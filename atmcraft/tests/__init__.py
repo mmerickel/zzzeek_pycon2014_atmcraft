@@ -1,11 +1,6 @@
-from ..model.meta import Session
-from sqlalchemy import engine_from_config
-from logging.config import fileConfig
-from ConfigParser import SafeConfigParser
+from ..model.meta import Session, setup_from_file
 import pkg_resources
 import unittest
-
-testing_engine = None
 
 def setup_package():
     """Set up configuration and a testing engine.
@@ -15,13 +10,7 @@ def setup_package():
     """
 
     fname = pkg_resources.resource_filename("atmcraft", "../development.ini")
-    fileConfig(fname)
-    config = SafeConfigParser()
-    config.read(fname)
-
-    global testing_engine
-    settings = dict(config.items("DEFAULT"))
-    testing_engine = engine_from_config(settings, 'sqlalchemy.')
+    setup_from_file(fname)
 
 
 class AppTest(unittest.TestCase):
@@ -33,7 +22,8 @@ class TransactionalTest(AppTest):
 
     def setUp(self):
         super(TransactionalTest, self).setUp()
-        self.connection = testing_engine.connect()
+        from ..model.meta.base import engine
+        self.connection = engine.connect()
         self.transaction = self.connection.begin()
         self.session = Session(bind=self.connection)
 

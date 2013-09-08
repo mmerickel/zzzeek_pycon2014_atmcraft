@@ -38,3 +38,28 @@ class AuthSession(SurrogatePK, Base):
                                 datetime.timedelta(seconds=360)).one()
         except exc.NoResultFound:
             return None
+
+
+def console(argv=None):
+
+    def adduser():
+        Session.add(Client(identifier=options.username, secret=options.password))
+        Session.commit()
+
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument("config",
+                            type=str,
+                            help="config file")
+    subparsers = parser.add_subparsers()
+    subparser = subparsers.add_parser("adduser", help="add a new user")
+    subparser.add_argument("username", help="username")
+    subparser.add_argument("password", help="password")
+    subparser.set_defaults(cmd=adduser)
+
+    options = parser.parse_args(argv)
+
+    from .meta import setup_from_file
+    setup_from_file(options.config)
+    options.cmd()

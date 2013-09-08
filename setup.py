@@ -9,7 +9,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'bcrypt',
-    'sqlalchemy >= 0.9.0',
+    'sqlalchemy >= 0.9.0dev',
     'alembic',
     'psycopg2',
     'decorator'
@@ -34,8 +34,9 @@ setup(name='atmcraft',
       install_requires=requires,
       tests_require=["nose"],
       test_suite="atmcraft",
-      entry_points = """\
-      [paste.app_factory]
-      main = atmcraft.application:main
-      """,
+      entry_points = {
+        'console_scripts': ['clientcfg = atmcraft.model.client:console'],
+        'paste.app_factory': ['main = atmcraft.application:main']
+      }
+
       )
