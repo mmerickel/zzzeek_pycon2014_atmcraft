@@ -7,7 +7,7 @@ import datetime
 class Client(SurrogatePK, Base):
     __tablename__ = 'client'
 
-    identifier = Column(String(32))
+    identifier = Column(String(32), unique=True)
     secret = Column(BcryptType)
 
 class AuthSession(SurrogatePK, Base):

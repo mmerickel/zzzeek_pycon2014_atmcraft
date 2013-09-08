@@ -10,7 +10,7 @@ requires = [
     'waitress',
     'bcrypt',
     'sqlalchemy >= 0.9.0dev',
-    'alembic',
+    'alembic >= 0.6.1',
     'psycopg2',
     'decorator'
     ]
