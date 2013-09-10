@@ -44,6 +44,8 @@ class Account(UniqueMixin, SurrogatePK, Base):
         Session.add(trans)
         account_balance.last_trans_id = trans.trans_id
         account_balance.balance += amount
+        if account_balance.balance < Decimal("0"):
+            raise ValueError("overdraft occurred")
         return trans
 
 

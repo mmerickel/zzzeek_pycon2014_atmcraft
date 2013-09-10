@@ -148,3 +148,16 @@ class OpTest(_Fixture, TransactionalTest):
                 {"savings": Decimal("50"), "checking": Decimal("30")})
 
 
+    def test_overdraft(self):
+        auth_session = self._balance_fixture()
+        request = testing.DummyRequest(params={
+                                    "auth_token": auth_session.token,
+                                    "type": "checking",
+                                    "amount": "100.00"
+                                    }, method="POST")
+        self.assertRaisesRegexp(
+            exc.HTTPBadRequest,
+            r"overdraft occurred",
+            withdraw, request
+        )
+

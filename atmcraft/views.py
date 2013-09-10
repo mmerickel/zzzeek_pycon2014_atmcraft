@@ -48,29 +48,6 @@ def start_session(request):
         else:
             return {"auth_token": session.token}
 
-
-def _balances(account):
-    return dict(
-                (balance_type.name, account_balance.balance)
-                for balance_type, account_balance
-                in account.balances.items()
-            )
-
-def _withdraw_or_deposit(request, withdraw):
-    form = Form(request,
-                schema=DepositWithdrawForm())
-    if form.validate():
-        auth_session = request.auth_session
-        auth_session.account.add_transaction(
-                        auth_session.client,
-                        form.data["type"],
-                        Decimal("0") - form.data["amount"]
-                        if withdraw else form.data["amount"]
-                    )
-        return _balances(auth_session.account)
-    else:
-        raise exc.HTTPBadRequest()
-
 @view_config(route_name='balance', renderer='json')
 @auth_on_token
 def balance(request):
@@ -88,3 +65,31 @@ def withdraw(request):
 @commit_on_success
 def deposit(request):
     return _withdraw_or_deposit(request, False)
+
+
+def _balances(account):
+    return dict(
+                (balance_type.name, account_balance.balance)
+                for balance_type, account_balance
+                in account.balances.items()
+            )
+
+def _withdraw_or_deposit(request, withdraw):
+    form = Form(request,
+                schema=DepositWithdrawForm())
+    if form.validate():
+        auth_session = request.auth_session
+        try:
+            auth_session.account.add_transaction(
+                            auth_session.client,
+                            form.data["type"],
+                            Decimal("0") - form.data["amount"]
+                            if withdraw else form.data["amount"]
+                        )
+        except ValueError as err:
+            raise exc.HTTPBadRequest(str(err))
+        else:
+            return _balances(auth_session.account)
+    else:
+        raise exc.HTTPBadRequest()
+
