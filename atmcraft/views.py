@@ -8,6 +8,11 @@ from . import util
 from .model.meta import commit_on_success
 from decimal import Decimal
 
+class StartSessionForm(Schema):
+    identifier = validators.String(max=100)
+    secret = validators.String(max=100)
+    account_name = validators.String(max=100)
+
 class DepositWithdrawForm(Schema):
     allow_extra_fields = True
     filter_extra_fields = True
@@ -36,17 +41,19 @@ def auth_on_token(fn, request):
 
 @view_config(route_name='start_session', renderer='json')
 def start_session(request):
-    try:
-        identifier, secret = request.params['identifier'], request.params['secret']
-        account_name = request.params['account_name']
-    except KeyError:
-        raise exc.HTTPForbidden()
-    else:
+    form = Form(request,
+                schema=StartSessionForm())
+    if form.validate():
+        identifier = form.data["identifier"]
+        secret = form.data["secret"]
+        account_name = form.data["account_name"]
         session = AuthSession.create(identifier, secret, account_name)
         if session is None:
             raise exc.HTTPForbidden()
         else:
             return {"auth_token": session.token}
+    else:
+        raise exc.HTTPForbidden()
 
 @view_config(route_name='balance', renderer='json')
 @auth_on_token

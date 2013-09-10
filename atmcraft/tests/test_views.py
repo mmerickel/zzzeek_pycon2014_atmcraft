@@ -73,7 +73,7 @@ class CreateSessionTest(_Fixture, TransactionalTest):
 
     def test_login_failed_wrong_pw(self):
         self._client_fixture()
-        request = testing.DummyRequest()
+        request = testing.DummyRequest(method="POST")
         request.params['identifier'] = '12345'
         request.params['secret'] = 'incorrect secret'
         request.params['account_name'] = 'zzzeek_two'
@@ -84,7 +84,19 @@ class CreateSessionTest(_Fixture, TransactionalTest):
         )
 
     def test_login_failed_no_user(self):
-        request = testing.DummyRequest()
+        request = testing.DummyRequest(method="POST")
+        request.params['identifier'] = '12345'
+        request.params['secret'] = 'some secret'
+        request.params['account_name'] = 'zzzeek_two'
+
+        self.assertRaises(
+            exc.HTTPForbidden,
+            start_session, request
+        )
+
+    def test_login_failed_wrong_method(self):
+        self._client_fixture()
+        request = testing.DummyRequest(method="GET")
         request.params['identifier'] = '12345'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
@@ -96,7 +108,7 @@ class CreateSessionTest(_Fixture, TransactionalTest):
 
     def test_login(self):
         client = self._client_fixture()
-        request = testing.DummyRequest()
+        request = testing.DummyRequest(method="POST")
         request.params['identifier'] = '12345'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
@@ -119,7 +131,8 @@ class CreateSessionTest(_Fixture, TransactionalTest):
 class OpTest(_Fixture, TransactionalTest):
     def test_balance(self):
         auth_session = self._balance_fixture()
-        request = testing.DummyRequest(params={"auth_token": auth_session.token})
+        request = testing.DummyRequest(params={"auth_token": auth_session.token},
+                                            method="GET")
         response = balance(request)
         self.assertEquals(response,
                 {"savings": Decimal("50"), "checking": Decimal("40")})
