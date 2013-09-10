@@ -1,9 +1,7 @@
-import unittest
-
 from pyramid import testing
 import pyramid.httpexceptions as exc
 
-from . import TransactionalTest, AppTest
+from . import TransactionalTest
 from ..model.client import Client, AuthSession
 from ..model.account import Account
 from ..model.meta import Session

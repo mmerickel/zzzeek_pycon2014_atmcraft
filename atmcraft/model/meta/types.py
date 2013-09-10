@@ -21,14 +21,14 @@ class Password(str):
 
     def __new__(cls, value, salt=None, crypt=True):
         if isinstance(value, unicode):
-            value = str(value)
+            value = value.encode('utf-8')
         if crypt:
             value = bcrypt.hashpw(value, salt or bcrypt.gensalt(4))
         return str.__new__(cls, value)
 
     def __eq__(self, other):
         if not isinstance(other, Password):
-            other = bcrypt.hashpw(other, self)
+            other = Password(other, self)
         return str.__eq__(self, other)
 
     def __ne__(self, other):

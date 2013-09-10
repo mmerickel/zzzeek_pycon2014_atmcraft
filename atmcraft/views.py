@@ -31,15 +31,16 @@ def auth_on_token(fn, request):
     try:
         auth_token = request.params['auth_token']
     except KeyError:
-        raise exc.HTTPForbidden()
+        raise exc.HTTPForbidden("auth_token is required")
     else:
         session = AuthSession.validate_token(auth_token)
         if session is None:
-            raise exc.HTTPForbidden()
+            raise exc.HTTPForbidden("no session for given auth_token")
         request.auth_session = session
         return fn(request)
 
 @view_config(route_name='start_session', renderer='json')
+@commit_on_success
 def start_session(request):
     form = Form(request,
                 schema=StartSessionForm())
