@@ -9,6 +9,7 @@ def main(global_config, **settings):
     config.add_route("start_session", "/login")
     config.add_route("withdraw", "/withdraw")
     config.add_route("deposit", "/deposit")
+    config.add_route("balance", "/balance")
 
     config.scan()
 

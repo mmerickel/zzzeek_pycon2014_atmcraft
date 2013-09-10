@@ -5,6 +5,7 @@ from pyramid.events import NewRequest, subscriber
 from sqlalchemy import engine_from_config
 from logging.config import fileConfig
 from ConfigParser import SafeConfigParser
+from decorator import decorator
 
 def setup_app(global_config, **settings):
     """Called when the Pyramid app first runs."""
@@ -44,6 +45,16 @@ def setup(config):
     engine = engine_from_config(config, "sqlalchemy.")
     Session.configure(bind=engine)
 
+@decorator
+def commit_on_success(fn, *arg, **kw):
+    try:
+        result = fn(*arg, **kw)
+        Session.commit()
+    except:
+        Session.rollback()
+        raise
+    else:
+        return result
 
 # bind the Session to the current request
 # Convention within Pyramid is to use the ZopeSQLAlchemy extension here,

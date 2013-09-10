@@ -3,6 +3,7 @@ from sqlalchemy import Column, ForeignKey, Table, ForeignKeyConstraint, \
 from sqlalchemy import event
 from sqlalchemy.sql import functions
 from sqlalchemy.ext.compiler import compiles
+from .base import Base
 
 def ReferenceCol(tablename, nullable=False, **kw):
     return Column(ForeignKey("%s.id" % tablename), nullable=nullable, **kw)
@@ -16,10 +17,9 @@ def _pg_utcnow(element, compiler, **kw):
     return "(CURRENT_TIMESTAMP AT TIME ZONE 'utc')::TIMESTAMP WITH TIME ZONE"
 
 
-
 @event.listens_for(Table, "after_parent_attach")
 def timestamp_cols(table, metadata):
-    if not table.name.startswith('alembic'):
+    if metadata is Base.metadata:
         table.append_column(
             Column('created_at',
                         DateTime(timezone=True),

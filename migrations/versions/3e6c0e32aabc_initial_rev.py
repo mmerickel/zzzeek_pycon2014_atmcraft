@@ -23,8 +23,10 @@ def upgrade():
     sa.Column('username', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=u'pk_account')
+    sa.PrimaryKeyConstraint('id', name=u'pk_account'),
+    sa.UniqueConstraint("username", name="uq_account_username")
     )
+
     op.create_table('balance_type',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
@@ -65,6 +67,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=u'pk_transaction'),
     sa.UniqueConstraint('trans_id', name='uq_transaction_trans_id')
     )
+
     ### end Alembic commands ###
 
 

@@ -7,21 +7,37 @@ from . import TransactionalTest, AppTest
 from ..model.client import Client, AuthSession
 from ..model.account import Account
 from ..model.meta import Session
-from ..views import auth_on_token
-from ..views import start_session
+from ..views import auth_on_token, start_session, balance, deposit, withdraw
 import datetime
+from decimal import Decimal
 
-
-class AuthTests(TransactionalTest):
-    def _auth_fixture(self, created_at=None):
-        client = Client(identifier='12345', secret="some secret")
-        account = Account(username="some user")
+class _Fixture(object):
+    def _auth_fixture(self, created_at=None, client=None, account=None):
+        if client is None:
+            client = self._client_fixture()
+        if account is None:
+            account = Account(username="some user")
         auth_session = AuthSession(client, account)
         if created_at is not None:
             auth_session.created_at = created_at
         Session.add(auth_session)
         Session.commit()
         return auth_session
+
+    def _client_fixture(self):
+        client = Client(identifier='12345', secret="some secret")
+        Session.add(client)
+        return client
+
+    def _balance_fixture(self):
+        client = self._client_fixture()
+        account = Account(username="some user")
+        account.add_transaction(client, "checking", Decimal("25.00"))
+        account.add_transaction(client, "checking", Decimal("15.00"))
+        account.add_transaction(client, "savings", Decimal("50.00"))
+        return self._auth_fixture(client=client, account=account)
+
+class AuthTests(_Fixture, TransactionalTest):
 
     def test_auth_not_present(self):
         request = testing.DummyRequest()
@@ -47,14 +63,13 @@ class AuthTests(TransactionalTest):
         request = testing.DummyRequest()
         auth_session = self._auth_fixture()
         request.params["auth_token"] = auth_session.token
-        auth_on_token(lambda req: "hi")(request)
+        self.assertEquals(
+            auth_on_token(lambda req: "hi")(request),
+            "hi"
+        )
         self.assertEquals(request.auth_session, auth_session)
 
-class CreateSessionTest(TransactionalTest):
-    def _client_fixture(self):
-        client = Client(identifier='12345', secret="some secret")
-        Session.add(client)
-        return client
+class CreateSessionTest(_Fixture, TransactionalTest):
 
     def test_login_failed_wrong_pw(self):
         self._client_fixture()
@@ -99,4 +114,37 @@ class CreateSessionTest(TransactionalTest):
                             order_by(AuthSession.id.desc()).first()
         assert auth_session_2 is not auth_session
         assert auth_session_2.account is auth_session.account
+
+
+class OpTest(_Fixture, TransactionalTest):
+    def test_balance(self):
+        auth_session = self._balance_fixture()
+        request = testing.DummyRequest(params={"auth_token": auth_session.token})
+        response = balance(request)
+        self.assertEquals(response,
+                {"savings": Decimal("50"), "checking": Decimal("40")})
+
+    def test_deposit(self):
+        auth_session = self._balance_fixture()
+        request = testing.DummyRequest(params={
+                                    "auth_token": auth_session.token,
+                                    "type": "checking",
+                                    "amount": "10.00"
+                                    }, method="POST")
+        response = deposit(request)
+        self.assertEquals(response,
+                {"savings": Decimal("50"), "checking": Decimal("50")})
+
+
+    def test_withdraw(self):
+        auth_session = self._balance_fixture()
+        request = testing.DummyRequest(params={
+                                    "auth_token": auth_session.token,
+                                    "type": "checking",
+                                    "amount": "10.00"
+                                    }, method="POST")
+        response = withdraw(request)
+        self.assertEquals(response,
+                {"savings": Decimal("50"), "checking": Decimal("30")})
+
 

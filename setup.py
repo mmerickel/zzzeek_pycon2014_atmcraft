@@ -7,6 +7,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 requires = [
     'pyramid',
     'pyramid_debugtoolbar',
+    'pyramid_simpleform',
+    'formencode',
     'waitress',
     'bcrypt',
     'sqlalchemy >= 0.9.0dev',

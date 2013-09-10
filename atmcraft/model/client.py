@@ -50,7 +50,7 @@ class AuthSession(SurrogatePK, Base):
             if client.secret != secret:
                 return None
 
-        account = Account.as_unique(Session(), username=account_name)
+        account = Account.as_unique(Session(), account_name)
         auth_session = AuthSession(client, account)
         Session.add(auth_session)
         return auth_session
