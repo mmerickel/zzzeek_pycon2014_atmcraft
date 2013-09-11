@@ -1,5 +1,15 @@
 from pyramid.config import Configurator
-from .model.meta import setup_app
+from pyramid.events import NewRequest, subscriber
+
+from .model.meta import setup_app, Session
+
+@subscriber(NewRequest)
+def cleanup_sess(event):
+    """Listen for new requests and assign a cleanup handler to each."""
+
+    def remove(request):
+        Session.remove()
+    event.request.add_finished_callback(remove)
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)

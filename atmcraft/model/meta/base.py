@@ -1,7 +1,6 @@
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from pyramid.threadlocal import get_current_request
-from pyramid.events import NewRequest, subscriber
 from sqlalchemy import engine_from_config
 from logging.config import fileConfig
 from ConfigParser import SafeConfigParser
@@ -33,13 +32,10 @@ def setup_from_file(fname):
 
 engine = None
 
+
 def setup(config):
     """Setup the application given a config dictionary."""
 
-    @subscriber(NewRequest)
-    def cleanup_sess(event):
-        """Listen for new requests and assign a cleanup handler to each."""
-        event.request.add_finished_callback(Session.remove)
 
     global engine
     engine = engine_from_config(config, "sqlalchemy.")
