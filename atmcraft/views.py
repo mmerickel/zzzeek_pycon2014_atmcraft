@@ -5,8 +5,11 @@ from .model.client import AuthSession
 from formencode import Schema, validators
 from pyramid_simpleform import Form
 from . import util
-from .model.meta import commit_on_success
+from .model.meta import commit_on_success, Session
 from decimal import Decimal
+import logging
+
+log = logging.getLogger(__name__)
 
 class StartSessionForm(Schema):
     identifier = validators.String(max=100)
@@ -52,6 +55,8 @@ def start_session(request):
         if session is None:
             raise exc.HTTPForbidden()
         else:
+            log.debug("new auth session for client %s username %s",
+                        identifier, account_name)
             return {"auth_token": session.token}
     else:
         raise exc.HTTPForbidden()
@@ -94,9 +99,13 @@ def _withdraw_or_deposit(request, withdraw):
                             Decimal("0") - form.data["amount"]
                             if withdraw else form.data["amount"]
                         )
+            log.debug("%s %d of type %s",
+                        "withdraw " if withdraw else "deposit ",
+                        form.data["amount"], form.data["type"])
         except ValueError as err:
             raise exc.HTTPBadRequest(str(err))
         else:
+            Session.commit()
             return _balances(auth_session.account)
     else:
         raise exc.HTTPBadRequest()

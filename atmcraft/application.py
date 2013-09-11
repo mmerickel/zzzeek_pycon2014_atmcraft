@@ -1,7 +1,8 @@
 from pyramid.config import Configurator
 from pyramid.events import NewRequest, subscriber
-
 from .model.meta import setup_app, Session
+from .util import dumps
+from pyramid.renderers import JSON
 
 @subscriber(NewRequest)
 def cleanup_sess(event):
@@ -20,6 +21,9 @@ def main(global_config, **settings):
     config.add_route("withdraw", "/withdraw")
     config.add_route("deposit", "/deposit")
     config.add_route("balance", "/balance")
+
+
+    config.add_renderer('json', JSON(serializer=dumps))
 
     config.scan()
 

@@ -4,6 +4,7 @@ from .meta import Base, SurrogatePK, \
 
 import uuid
 from decimal import Decimal
+from sqlalchemy.orm import joinedload, subqueryload
 
 class Account(UniqueMixin, SurrogatePK, Base):
     __tablename__ = 'account'
@@ -12,7 +13,8 @@ class Account(UniqueMixin, SurrogatePK, Base):
     balances = relationship(
                         "AccountBalance",
                         collection_class=attribute_mapped_collection("balance_type"),
-                        backref="account"
+                        backref="account",
+                        lazy="immediate"
                     )
 
     @classmethod
@@ -57,7 +59,7 @@ class AccountBalance(SurrogatePK, Base):
     balance = Column(Amount)
     last_trans_id = Column(GUID())
 
-    balance_type = relationship("BalanceType")
+    balance_type = relationship("BalanceType", lazy="joined", innerjoin=True)
     transactions = relationship("Transaction", backref="account_balance")
 
     def __init__(self, **kw):
