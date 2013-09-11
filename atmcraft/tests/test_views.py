@@ -135,6 +135,17 @@ class OpTest(_Fixture, TransactionalTest):
         self.assertEquals(response,
                 {"savings": Decimal("50"), "checking": Decimal("40")})
 
+    def test_empty_deposit(self):
+        auth_session = self._auth_fixture()
+        request = testing.DummyRequest(params={
+                                    "auth_token": auth_session.token,
+                                    "type": "checking",
+                                    "amount": "10.00"
+                                    }, method="POST")
+        response = deposit(request)
+        self.assertEquals(response,
+                {"checking": Decimal("10")})
+
     def test_deposit(self):
         auth_session = self._balance_fixture()
         request = testing.DummyRequest(params={

@@ -34,7 +34,7 @@ class Account(UniqueMixin, SurrogatePK, Base):
             account_balance = self.balances[balance_type]
         else:
             account_balance = self.balances[balance_type] = \
-                AccountBalance(account=self, balance_type=balance_type)
+                AccountBalance(balance_type=balance_type)
 
         trans = Transaction(
                 account_balance=account_balance,
