@@ -100,7 +100,7 @@ def _withdraw_or_deposit(request, withdraw):
                             if withdraw else form.data["amount"]
                         )
             log.debug("%s %d of type %s",
-                        "withdraw " if withdraw else "deposit ",
+                        "withdraw" if withdraw else "deposit",
                         form.data["amount"], form.data["type"])
         except ValueError as err:
             raise exc.HTTPBadRequest(str(err))

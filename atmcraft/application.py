@@ -22,7 +22,6 @@ def main(global_config, **settings):
     config.add_route("deposit", "/deposit")
     config.add_route("balance", "/balance")
 
-
     config.add_renderer('json', JSON(serializer=dumps))
 
     config.scan()

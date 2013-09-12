@@ -2,6 +2,10 @@ from formencode.validators import Number, Invalid
 from decimal import Decimal
 import json
 
+import logging
+
+log = logging.getLogger(__name__)
+
 class DecimalNumber(Number):
 
     def _to_python(self, value, state):
@@ -20,4 +24,6 @@ def dumps(obj, default=None, **kw):
             return default(obj)
         else:
             raise TypeError("value not json encodable: %s" % obj)
-    return json.dumps(obj, default=default_, **kw)
+    dumped = json.dumps(obj, default=default_, indent=4, **kw)
+    log.debug(dumped)
+    return dumped
