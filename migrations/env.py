@@ -16,22 +16,6 @@ fileConfig(config.config_file_name)
 from atmcraft.model.meta import Base
 target_metadata = Base.metadata
 
-def render_meta_items(type_, obj, autogen_context):
-    """Render custom schema items correctly within an autogenerate.
-
-    .. seealso::
-
-        https://alembic.readthedocs.org/en/latest/api.html#the-environment-context
-
-    """
-    # render types we define in "meta" with the correct
-    # module name
-    if type_ == "type" and "atmcraft" in obj.__module__:
-        return "meta.%r" % obj
-
-    # use default rendering
-    return False
-
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -66,7 +50,7 @@ def run_migrations_online():
     context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
-                render_item=render_meta_items
+                user_module_prefix="meta.",
                 )
 
     try:

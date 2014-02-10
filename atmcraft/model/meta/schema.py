@@ -1,6 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Table, ForeignKeyConstraint, \
-                    PrimaryKeyConstraint, UniqueConstraint, Index, DateTime
-from sqlalchemy import event
+from sqlalchemy import Column, ForeignKey, Table, DateTime
+from sqlalchemy import event, MetaData
 from sqlalchemy.sql import functions
 from sqlalchemy.ext.compiler import compiles
 from .base import Base
@@ -45,29 +44,9 @@ def timestamp_cols(table, metadata):
                         default=utcnow(), onupdate=utcnow())
         )
 
-@event.listens_for(PrimaryKeyConstraint, "after_parent_attach")
-def pk_const_name(const, table):
-    const.name = "pk_%s" % (table.name, )
-
-@event.listens_for(ForeignKeyConstraint, "after_parent_attach")
-def fk_const_name(const, table):
-    fk = list(const.elements)[0]
-    reftable, refcol = fk.target_fullname.split(".")
-    const.name = "fk_%s_%s_%s" % (table.name,
-                                fk.parent.name,
-                                reftable
-                                )
-
-@event.listens_for(UniqueConstraint, "after_parent_attach")
-def unique_const_name(const, table):
-    const.name = "uq_%s_%s" % (
-        table.name,
-        list(const.columns)[0].name
-    )
-
-@event.listens_for(Index, "after_parent_attach")
-def index_const_name(const, table):
-    const.name = "ix_%s_%s" % (
-        table.name,
-        list(const.columns)[0].name
-    )
+Base.metadata = MetaData(naming_convention={
+        "pk": "pk_%(table_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ix": "ix_%(table_name)s_%(column_0_name)s"
+    })

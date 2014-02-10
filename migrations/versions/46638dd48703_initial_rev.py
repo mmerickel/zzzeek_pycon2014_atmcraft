@@ -1,13 +1,13 @@
 """initial rev
 
-Revision ID: 3e6c0e32aabc
+Revision ID: 46638dd48703
 Revises: None
-Create Date: 2013-09-08 13:15:32.088452
+Create Date: 2014-02-10 15:26:55.713258
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '3e6c0e32aabc'
+revision = '46638dd48703'
 down_revision = None
 
 from alembic import op
@@ -23,16 +23,15 @@ def upgrade():
     sa.Column('username', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=u'pk_account'),
-    sa.UniqueConstraint("username", name="uq_account_username")
+    sa.PrimaryKeyConstraint('id', name='pk_account'),
+    sa.UniqueConstraint('username', name='uq_account_username')
     )
-
     op.create_table('balance_type',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=u'pk_balance_type')
+    sa.PrimaryKeyConstraint('id', name='pk_balance_type')
     )
     op.create_table('client',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -40,7 +39,7 @@ def upgrade():
     sa.Column('secret', meta.BcryptType(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=u'pk_client')
+    sa.PrimaryKeyConstraint('id', name='pk_client')
     )
     op.create_table('account_balance',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -50,9 +49,9 @@ def upgrade():
     sa.Column('last_trans_id', meta.GUID(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['account_id'], ['account.id'], name=u'fk_account_balance_account_id_account'),
-    sa.ForeignKeyConstraint(['balance_type_id'], ['balance_type.id'], name=u'fk_account_balance_balance_type_id_balance_type'),
-    sa.PrimaryKeyConstraint('id', name=u'pk_account_balance')
+    sa.ForeignKeyConstraint(['account_id'], ['account.id'], name='fk_account_balance_account_id_account'),
+    sa.ForeignKeyConstraint(['balance_type_id'], ['balance_type.id'], name='fk_account_balance_balance_type_id_balance_type'),
+    sa.PrimaryKeyConstraint('id', name='pk_account_balance')
     )
     op.create_table('transaction',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -62,12 +61,11 @@ def upgrade():
     sa.Column('amount', sa.Numeric(precision=8, scale=2), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['account_balance_id'], ['account_balance.id'], name=u'fk_transaction_account_balance_id_account_balance'),
-    sa.ForeignKeyConstraint(['client_id'], ['client.id'], name=u'fk_transaction_client_id_client'),
-    sa.PrimaryKeyConstraint('id', name=u'pk_transaction'),
+    sa.ForeignKeyConstraint(['account_balance_id'], ['account_balance.id'], name='fk_transaction_account_balance_id_account_balance'),
+    sa.ForeignKeyConstraint(['client_id'], ['client.id'], name='fk_transaction_client_id_client'),
+    sa.PrimaryKeyConstraint('id', name='pk_transaction'),
     sa.UniqueConstraint('trans_id', name='uq_transaction_trans_id')
     )
-
     ### end Alembic commands ###
 
 
