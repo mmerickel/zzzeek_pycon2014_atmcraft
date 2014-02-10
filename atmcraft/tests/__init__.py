@@ -1,4 +1,5 @@
 from ..model.meta import Session, setup_from_file
+from ._mock_session import MockSession
 import pkg_resources
 import unittest
 
@@ -17,7 +18,7 @@ class AppTest(unittest.TestCase):
     pass
 
 class TransactionalTest(AppTest):
-    """Run tests within a transactional boundary.
+    """Run tests against a relational database within a transactional boundary.
     """
 
     def setUp(self):
@@ -35,3 +36,15 @@ class TransactionalTest(AppTest):
         self.session.close()
         super(TransactionalTest, self).tearDown()
 
+
+
+class MockDatabaseTest(AppTest):
+    """Run tests against a mock query system."""
+
+    def setUp(self):
+        super(MockDatabaseTest, self).setUp()
+        Session.registry.set(MockSession())
+
+    def tearDown(self):
+        Session.remove()
+        super(MockDatabaseTest, self).tearDown()

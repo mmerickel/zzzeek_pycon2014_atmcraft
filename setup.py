@@ -11,7 +11,7 @@ requires = [
     'formencode',
     'waitress',
     'bcrypt',
-    'sqlalchemy >= 0.9.0dev',
+    'sqlalchemy >= 0.9.3dev',
     'alembic >= 0.6.1',
     'psycopg2',
     'decorator'
@@ -34,7 +34,7 @@ setup(name='atmcraft',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      tests_require=["nose"],
+      tests_require=["nose", "mock"],
       test_suite="atmcraft",
       entry_points = {
         'console_scripts': ['clientcfg = atmcraft.model.client:console'],
