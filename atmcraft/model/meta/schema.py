@@ -1,8 +1,11 @@
-from sqlalchemy import Column, ForeignKey, Table, DateTime
+from sqlalchemy import Column, ForeignKey, Table, DateTime, Integer
 from sqlalchemy import event, MetaData
 from sqlalchemy.sql import functions
 from sqlalchemy.ext.compiler import compiles
 from .base import Base
+
+class SurrogatePK(object):
+    id = Column(Integer, primary_key=True)
 
 def ReferenceCol(tablename, nullable=False, **kw):
     return Column(ForeignKey("%s.id" % tablename), nullable=nullable, **kw)
@@ -44,6 +47,9 @@ def timestamp_cols(table, metadata):
                         default=utcnow(), onupdate=utcnow())
         )
 
+# ensure tables haven't been set up in the existing
+# metadata, which we are going to replace
+assert not Base.metadata.tables
 Base.metadata = MetaData(naming_convention={
         "pk": "pk_%(table_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",

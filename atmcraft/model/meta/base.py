@@ -32,10 +32,8 @@ def setup_from_file(fname):
 
 engine = None
 
-
 def setup(config):
     """Setup the application given a config dictionary."""
-
 
     global engine
     engine = engine_from_config(config, "sqlalchemy.")

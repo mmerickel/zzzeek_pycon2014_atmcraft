@@ -7,6 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class DecimalNumber(Number):
+    """formencode validator for Decimal objects."""
 
     def _to_python(self, value, state):
         try:
@@ -17,6 +18,8 @@ class DecimalNumber(Number):
 
 
 def dumps(obj, default=None, **kw):
+    """Json dumps function which includes Decimal processing as well as logging."""
+
     def default_(obj):
         if isinstance(obj, Decimal):
             return str(obj)

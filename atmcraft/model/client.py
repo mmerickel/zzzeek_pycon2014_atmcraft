@@ -1,5 +1,5 @@
-from .meta import SurrogatePK, Base, Column, String, \
-            BcryptType, ReferenceCol, relationship, Session, utcnow
+from .meta import SurrogatePK, Base, Column, String, BcryptType, \
+            Session, utcnow, many_to_one
 from sqlalchemy.orm import exc
 import os
 import datetime
@@ -14,12 +14,10 @@ class Client(SurrogatePK, Base):
 class AuthSession(SurrogatePK, Base):
     __tablename__ = 'auth_session'
 
-    client_id = ReferenceCol('client')
-    account_id = ReferenceCol('account')
-
     token = Column(String(64), nullable=False)
-    client = relationship("Client")
-    account = relationship("Account")
+
+    client = many_to_one("Client")
+    account = many_to_one("Account")
 
     def __init__(self, client, account):
         self.client = client

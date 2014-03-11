@@ -1,16 +1,16 @@
 from .meta import Base, SurrogatePK, \
-            Column, relationship, attribute_mapped_collection, String,\
-            Amount, ReferenceCol, GUID, UniqueMixin, Session
+            Column, attribute_mapped_collection, String,\
+            Amount, GUID, UniqueMixin, Session, \
+            one_to_many, many_to_one
 
 import uuid
 from decimal import Decimal
-from sqlalchemy.orm import joinedload, subqueryload
 
 class Account(UniqueMixin, SurrogatePK, Base):
     __tablename__ = 'account'
 
     username = Column(String(20), unique=True, nullable=False)
-    balances = relationship(
+    balances = one_to_many(
                         "AccountBalance",
                         collection_class=attribute_mapped_collection("balance_type"),
                         backref="account",
@@ -27,7 +27,6 @@ class Account(UniqueMixin, SurrogatePK, Base):
 
     def __init__(self, username):
         self.username = username
-
 
     def add_transaction(self, client, type_, amount):
         balance_type = BalanceType.as_unique(Session(), type_)
@@ -54,13 +53,11 @@ class Account(UniqueMixin, SurrogatePK, Base):
 class AccountBalance(SurrogatePK, Base):
     __tablename__ = 'account_balance'
 
-    account_id = ReferenceCol('account')
-    balance_type_id = ReferenceCol('balance_type')
     balance = Column(Amount)
     last_trans_id = Column(GUID())
 
-    balance_type = relationship("BalanceType", lazy="joined", innerjoin=True)
-    transactions = relationship("Transaction", backref="account_balance")
+    balance_type = many_to_one("BalanceType", lazy="joined", innerjoin=True)
+    transactions = one_to_many("Transaction", backref="account_balance")
 
     def __init__(self, **kw):
         self.balance = Decimal("0")
@@ -70,11 +67,9 @@ class Transaction(SurrogatePK, Base):
     __tablename__ = 'transaction'
 
     trans_id = Column(GUID(), nullable=False, unique=True)
-    client_id = ReferenceCol("client")
-    account_balance_id = ReferenceCol("account_balance")
     amount = Column(Amount, nullable=False)
 
-    client = relationship("Client")
+    client = many_to_one("Client")
 
     def __init__(self, **kw):
         self.trans_id = uuid.uuid4()
