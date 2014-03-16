@@ -45,6 +45,7 @@ class References(object):
                     )
             )
 
+
 class utcnow(functions.FunctionElement):
     key = 'utcnow'
     type = DateTime(timezone=True)

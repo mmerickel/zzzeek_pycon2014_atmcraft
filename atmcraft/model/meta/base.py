@@ -42,6 +42,9 @@ def setup(config):
 
 @decorator
 def commit_on_success(fn, *arg, **kw):
+    """Decorate any function to commit the session on success, rollback in
+    the case of error."""
+
     try:
         result = fn(*arg, **kw)
         Session.commit()
@@ -61,12 +64,12 @@ class Base(References):
 
 Base = declarative_base(cls=Base)
 
-# ensure tables haven't been set up in the existing
-# metadata, which we are going to replace
-assert not Base.metadata.tables
-Base.metadata = MetaData(naming_convention={
+# establish a constraint naming convention.
+# see http://docs.sqlalchemy.org/en/latest/core/constraints.html#configuring-constraint-naming-conventions
+#
+Base.metadata.naming_convention={
         "pk": "pk_%(table_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",
         "ix": "ix_%(table_name)s_%(column_0_name)s"
-    })
+    }
