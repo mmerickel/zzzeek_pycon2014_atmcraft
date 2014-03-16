@@ -1,14 +1,14 @@
-"""add unique constraint on client
+"""add unique constraint to client.id
 
-Revision ID: a3a6055b3f0
-Revises: 33bb7f3c67ff
-Create Date: 2014-03-16 15:34:38.454567
+Revision ID: 2774482b60a1
+Revises: 52caef8c4043
+Create Date: 2014-03-16 15:39:11.074384
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'a3a6055b3f0'
-down_revision = '33bb7f3c67ff'
+revision = '2774482b60a1'
+down_revision = '52caef8c4043'
 
 from alembic import op
 import sqlalchemy as sa

@@ -1,14 +1,14 @@
-"""add auth session
+"""add auth_session table
 
-Revision ID: 124b502f3081
-Revises: a3a6055b3f0
-Create Date: 2014-03-16 15:35:04.574577
+Revision ID: 1495bc6c479
+Revises: 2774482b60a1
+Create Date: 2014-03-16 15:39:32.146750
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '124b502f3081'
-down_revision = 'a3a6055b3f0'
+revision = '1495bc6c479'
+down_revision = '2774482b60a1'
 
 from alembic import op
 import sqlalchemy as sa
@@ -23,6 +23,10 @@ def upgrade():
     sa.Column('token', sa.String(length=64), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('account_id', sa.Integer(), nullable=True),
+    sa.Column('client_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['account_id'], [u'account.id'], name=op.f('fk_auth_session_account_id_account')),
+    sa.ForeignKeyConstraint(['client_id'], [u'client.id'], name=op.f('fk_auth_session_client_id_client')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_auth_session'))
     )
     ### end Alembic commands ###
