@@ -1,5 +1,4 @@
 from sqlalchemy.orm import relationship, mapper
-from .schema import ReferenceCol
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import event
 
@@ -14,9 +13,7 @@ def many_to_one(clsname, **kw):
         def setup_fk():
             refernced_cls = cls._decl_class_registry[clsname]
             tablename = refernced_cls.__table__.name
-            if not hasattr(cls, "%s_id" % tablename):
-                col = ReferenceCol(tablename)
-                setattr(cls, "%s_id" % tablename, col)
+            cls._reference_table(tablename)
 
         return relationship(clsname, **kw)
     return m2o
@@ -26,14 +23,11 @@ def one_to_many(clsname, **kw):
 
     @declared_attr
     def o2m(cls):
-
         @event.listens_for(mapper, "before_configured", once=True)
         def setup_fk():
-            refernced_cls = cls._decl_class_registry[clsname]
+            referenced_cls = cls._decl_class_registry[clsname]
             tablename = cls.__table__.name
-            if not hasattr(refernced_cls, "%s_id" % tablename):
-                col = ReferenceCol(tablename)
-                setattr(refernced_cls, "%s_id" % tablename, col)
+            referenced_cls._reference_table(tablename)
 
         return relationship(clsname, **kw)
     return o2m

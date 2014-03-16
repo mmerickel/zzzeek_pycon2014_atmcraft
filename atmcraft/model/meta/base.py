@@ -1,10 +1,11 @@
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from pyramid.threadlocal import get_current_request
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, MetaData
 from logging.config import fileConfig
 from ConfigParser import SafeConfigParser
 from decorator import decorator
+from .schema import References
 
 def setup_app(global_config, **settings):
     """Called when the Pyramid app first runs."""
@@ -55,5 +56,17 @@ def commit_on_success(fn, *arg, **kw):
 # allowing integration into Pyramid's transactional scope.
 Session = scoped_session(sessionmaker(), scopefunc=get_current_request)
 
-Base = declarative_base()
+class Base(References):
+    pass
 
+Base = declarative_base(cls=Base)
+
+# ensure tables haven't been set up in the existing
+# metadata, which we are going to replace
+assert not Base.metadata.tables
+Base.metadata = MetaData(naming_convention={
+        "pk": "pk_%(table_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ix": "ix_%(table_name)s_%(column_0_name)s"
+    })
