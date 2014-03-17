@@ -1,6 +1,5 @@
-from sqlalchemy.orm import relationship, mapper
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy import event
 
 
 def many_to_one(clsname, **kw):
@@ -10,16 +9,9 @@ def many_to_one(clsname, **kw):
     to generate a full foreign key relationship to the remote table.
 
     """
-
     @declared_attr
     def m2o(cls):
-
-        @event.listens_for(mapper, "before_configured", once=True)
-        def setup_fk():
-            refernced_cls = cls._decl_class_registry[clsname]
-            tablename = refernced_cls.__table__.name
-            cls._reference_table(tablename)
-
+        cls._references((cls.__name__, clsname))
         return relationship(clsname, **kw)
     return m2o
 
@@ -30,15 +22,9 @@ def one_to_many(clsname, **kw):
     to generate a full foreign key relationship from the remote table.
 
     """
-
     @declared_attr
     def o2m(cls):
-        @event.listens_for(mapper, "before_configured", once=True)
-        def setup_fk():
-            referenced_cls = cls._decl_class_registry[clsname]
-            tablename = cls.__table__.name
-            referenced_cls._reference_table(tablename)
-
+        cls._references((clsname, cls.__name__))
         return relationship(clsname, **kw)
     return o2m
 

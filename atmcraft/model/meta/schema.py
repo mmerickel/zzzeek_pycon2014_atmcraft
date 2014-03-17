@@ -10,41 +10,36 @@ class SurrogatePK(object):
     id = Column(Integer, primary_key=True)
 
 class References(object):
-    """A mixin that automatically creates foreign key references to
-    related classes.
-
-    The :meth:`.References._reference_table` method can be called directly,
-    or the :attr:`.References.references` collection can be altered with
-    the names of tables to be referenced, which will be handled in the
-    ``__declare_first__`` declarative hook.
-
-    The :meth:`.References._reference_table` method works by locating
-    the related :class:`.Table` object, then generating locally-mapped columns
-    which refer to each column in the primary key of that referenced table.
-    It then creates a composite-ready :class:`.ForeignKeyConstraint` object
-    referring to those same primary key columns.
-
-    """
-    references = ()
+    """A mixin which creates foreign key references to related classes."""
+    _to_ref = set()
+    _references = _to_ref.add
 
     @classmethod
     def __declare_first__(cls):
-        for tname in cls.references:
-            cls._reference_table(tname)
+        """declarative hook called within the 'before_configure' mapper event."""
+        for lcl, rmt in cls._to_ref:
+            cls._decl_class_registry[lcl]._reference_table(
+                    cls._decl_class_registry[rmt].__table__)
+        cls._to_ref.clear()
 
     @classmethod
-    def _reference_table(cls, tname):
-        ref_table = cls.metadata.tables[tname]
-        for col in ref_table.primary_key:
-            setattr(cls, "%s_%s" % (tname, col.name), Column())
+    def _reference_table(cls, ref_table):
+        """Create a foreign key reference from the local class to the given remote
+        table.
 
-        cls.__table__.append_constraint(
-                    ForeignKeyConstraint(
-                        ["%s_%s" % (tname, col.name) for col in ref_table.primary_key],
-                        ["%s.%s" % (tname, col.name) for col in ref_table.primary_key]
-                    )
-            )
+        Adds column references to the declarative class and adds a
+        ForeignKeyConstraint.
 
+        """
+        # create pairs of (Foreign key column, primary key column)
+        cols = [(Column(), refcol) for refcol in ref_table.primary_key]
+
+        # set "tablename_colname = Foreign key Column" on the local class
+        for col, refcol in cols:
+            setattr(cls, "%s_%s" % (ref_table.name, refcol.name), col)
+
+        # add a ForeignKeyConstraint([local columns], [remote columns])
+        cls.__table__.append_constraint(ForeignKeyConstraint(*zip(*cols)))
 
 class utcnow(functions.FunctionElement):
     key = 'utcnow'
