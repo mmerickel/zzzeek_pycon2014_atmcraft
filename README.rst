@@ -4,6 +4,8 @@ ATMCRAFT
 
 A demonstration Pyramid application written by Mike Bayer.
 
+For the corresponding Minecraft Bukkit plugin, see https://bitbucket.org/zzzeek/pycon2014_atmcraft_java/.
+
 This program runs a simple web service which accepts
 commands regarding "bank accounts".
 
