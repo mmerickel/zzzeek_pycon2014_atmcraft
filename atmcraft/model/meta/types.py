@@ -1,9 +1,10 @@
+import uuid
+
+import bcrypt
+
 from sqlalchemy import String, Numeric, Integer
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
-
-import uuid
-import bcrypt
 
 Amount = Numeric(8, 2)
 

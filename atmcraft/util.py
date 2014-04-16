@@ -1,10 +1,9 @@
-from formencode.validators import Number, Invalid
+from ConfigParser import SafeConfigParser
 from decimal import Decimal
-import json
+from logging.config import fileConfig
 
-import logging
-
-log = logging.getLogger(__name__)
+from formencode.validators import Number, Invalid
+from pyramid.renderers import JSON
 
 class DecimalNumber(Number):
     """formencode validator for Decimal objects."""
@@ -16,17 +15,19 @@ class DecimalNumber(Number):
         except ValueError:
             raise Invalid(self.message('number', state), value, state)
 
+def make_json_renderer():
+    renderer = JSON(indent=4)
+    renderer.add_adapter(Decimal, lambda v, r: str(v))
+    return renderer
 
-def dumps(obj, default=None, **kw):
-    """Json dumps function which includes Decimal processing as well as logging."""
+def setup_from_file(fname):
+    """Parse the configuration file and return the settings.
 
-    def default_(obj):
-        if isinstance(obj, Decimal):
-            return str(obj)
-        elif default is not None:
-            return default(obj)
-        else:
-            raise TypeError("value not json encodable: %s" % obj)
-    dumped = json.dumps(obj, default=default_, indent=4, **kw)
-    log.debug(dumped)
-    return dumped
+    This will also configure the stdlib logging package.
+    """
+    fileConfig(fname)
+
+    cfg_parser = SafeConfigParser()
+    cfg_parser.read(fname)
+    settings = dict(cfg_parser.items('DEFAULT'))
+    return settings

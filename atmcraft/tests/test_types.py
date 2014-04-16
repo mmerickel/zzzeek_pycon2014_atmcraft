@@ -1,9 +1,11 @@
 import unittest
-from ..model.meta import Password, BcryptType, Session, GUID
-import bcrypt
-from . import TransactionalTest
-from sqlalchemy import Table, Column, MetaData, select
 import uuid
+
+import bcrypt
+from sqlalchemy import Table, Column, MetaData, select
+
+from ..model.meta import Password, BcryptType, GUID
+from . import TransactionalTest
 
 class GUIDTest(TransactionalTest):
     def setUp(self):
@@ -13,14 +15,14 @@ class GUIDTest(TransactionalTest):
                 Column('guid_value', GUID())
             )
 
-        self.guid_table.create(Session.bind)
+        self.guid_table.create(self.db.bind)
 
     def test_round_trip(self):
         my_guid = uuid.uuid4()
-        Session.execute(self.guid_table.insert(), dict(guid_value=my_guid))
+        self.db.execute(self.guid_table.insert(), dict(guid_value=my_guid))
 
         self.assertEquals(
-            Session.scalar(select([self.guid_table.c.guid_value])),
+            self.db.scalar(select([self.guid_table.c.guid_value])),
             my_guid
         )
 
@@ -32,13 +34,13 @@ class BcryptTypeTest(TransactionalTest):
                 Column('bc_value', BcryptType)
             )
 
-        self.bc_table.create(Session.bind)
+        self.bc_table.create(self.db.bind)
 
     def test_round_trip(self):
 
-        Session.execute(self.bc_table.insert(), dict(bc_value="hello"))
+        self.db.execute(self.bc_table.insert(), dict(bc_value="hello"))
 
-        result = Session.scalar(select([self.bc_table.c.bc_value]))
+        result = self.db.scalar(select([self.bc_table.c.bc_value]))
         self.assertEquals(result, "hello")
         self.assertEquals(result, Password("hello", result))
         self.assertNotEquals(result, "bye")

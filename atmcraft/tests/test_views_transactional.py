@@ -1,13 +1,13 @@
-from pyramid import testing
-import pyramid.httpexceptions as exc
-
-from . import TransactionalTest
-from ..model.client import Client, AuthSession
-from ..model.account import Account
-from ..model.meta import Session
-from ..views import auth_on_token, start_session, balance, deposit, withdraw
 import datetime
 from decimal import Decimal
+
+from pyramid import testing
+from pyramid import httpexceptions as exc
+
+from ..model.client import Client, AuthSession
+from ..model.account import Account
+from ..views import auth_on_token, start_session, balance, deposit, withdraw
+from . import TransactionalTest
 
 class _TransactionalFixture(TransactionalTest):
 
@@ -17,22 +17,25 @@ class _TransactionalFixture(TransactionalTest):
 
         if account is None:
             account = Account(username="some user")
+            self.db.add(account)
 
         auth_session = AuthSession(client, account)
         if created_at is not None:
             auth_session.created_at = created_at
 
-        Session.add(auth_session)
+        self.db.add(auth_session)
         return auth_session
 
     def _client_fixture(self):
         client = Client(identifier='12345', secret="some secret")
-        Session.add(client)
+        self.db.add(client)
         return client
 
     def _balance_fixture(self):
         client = self._client_fixture()
         account = Account(username="some user")
+        self.db.add(account)
+
         account.add_transaction(client, "checking", Decimal("25.00"))
         account.add_transaction(client, "checking", Decimal("15.00"))
         account.add_transaction(client, "savings", Decimal("50.00"))
@@ -46,7 +49,7 @@ class AuthTests(_TransactionalFixture):
 
         self.assertRaises(
             exc.HTTPForbidden,
-            auth_on_token(lambda req: "hi"), request
+            auth_on_token(lambda ctx, req: "hi"), None, request
         )
 
     def test_auth_timeout(self):
@@ -57,17 +60,19 @@ class AuthTests(_TransactionalFixture):
                             datetime.timedelta(seconds=800))
 
         request.params["auth_token"] = auth_session.token
+        request.db = self.db
         self.assertRaises(
             exc.HTTPForbidden,
-            auth_on_token(lambda req: "hi"), request
+            auth_on_token(lambda ctx, req: "hi"), None, request
         )
 
     def test_auth_success(self):
         request = testing.DummyRequest()
         auth_session = self._auth_fixture()
         request.params["auth_token"] = auth_session.token
+        request.db = self.db
         self.assertEquals(
-            auth_on_token(lambda req: "hi")(request),
+            auth_on_token(lambda ctx, req: "hi")(None, request),
             "hi"
         )
         self.assertEquals(request.auth_session, auth_session)
@@ -80,6 +85,7 @@ class CreateSessionTest(_TransactionalFixture):
         request.params['identifier'] = '12345'
         request.params['secret'] = 'incorrect secret'
         request.params['account_name'] = 'zzzeek_two'
+        request.db = self.db
 
         self.assertRaises(
             exc.HTTPForbidden,
@@ -91,6 +97,7 @@ class CreateSessionTest(_TransactionalFixture):
         request.params['identifier'] = '12345'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
+        request.db = self.db
 
         self.assertRaises(
             exc.HTTPForbidden,
@@ -103,6 +110,7 @@ class CreateSessionTest(_TransactionalFixture):
         request.params['identifier'] = '12345'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
+        request.db = self.db
 
         self.assertRaises(
             exc.HTTPForbidden,
@@ -115,6 +123,7 @@ class CreateSessionTest(_TransactionalFixture):
         request.params['identifier'] = '12346'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
+        request.db = self.db
 
         self.assertRaises(
             exc.HTTPForbidden,
@@ -127,16 +136,17 @@ class CreateSessionTest(_TransactionalFixture):
         request.params['identifier'] = '12345'
         request.params['secret'] = 'some secret'
         request.params['account_name'] = 'zzzeek_two'
+        request.db = self.db
 
         response = start_session(request)
 
-        auth_session = Session.query(AuthSession).filter_by(client=client).one()
+        auth_session = self.db.query(AuthSession).filter_by(client=client).one()
         self.assertEquals(response, {"auth_token": auth_session.token})
         self.assertEquals(auth_session.account.username, "zzzeek_two")
 
         # second call gives us a new session but same account
         response = start_session(request)
-        auth_session_2 = Session.query(AuthSession).\
+        auth_session_2 = self.db.query(AuthSession).\
                             filter_by(client=client).\
                             order_by(AuthSession.id.desc()).first()
 
@@ -147,8 +157,8 @@ class CreateSessionTest(_TransactionalFixture):
 class OpTest(_TransactionalFixture):
     def test_balance(self):
         auth_session = self._balance_fixture()
-        request = testing.DummyRequest(params={"auth_token": auth_session.token},
-                                            method="GET")
+        request = testing.DummyRequest(method="GET")
+        request.auth_session = auth_session
         response = balance(request)
         self.assertEquals(response,
                 {"savings": Decimal("50"), "checking": Decimal("40")})
@@ -157,10 +167,10 @@ class OpTest(_TransactionalFixture):
         auth_session = self._auth_fixture()
 
         request = testing.DummyRequest(params={
-                                    "auth_token": auth_session.token,
                                     "type": "checking",
                                     "amount": "10.00"
                                     }, method="POST")
+        request.auth_session = auth_session
         response = deposit(request)
         self.assertEquals(response,
                 {"checking": Decimal("10")})
@@ -168,10 +178,10 @@ class OpTest(_TransactionalFixture):
     def test_deposit(self):
         auth_session = self._balance_fixture()
         request = testing.DummyRequest(params={
-                                    "auth_token": auth_session.token,
                                     "type": "checking",
                                     "amount": "10.00"
                                     }, method="POST")
+        request.auth_session = auth_session
         response = deposit(request)
         self.assertEquals(response,
                 {"savings": Decimal("50"), "checking": Decimal("50")})
@@ -180,10 +190,10 @@ class OpTest(_TransactionalFixture):
     def test_withdraw(self):
         auth_session = self._balance_fixture()
         request = testing.DummyRequest(params={
-                                    "auth_token": auth_session.token,
                                     "type": "checking",
                                     "amount": "10.00"
                                     }, method="POST")
+        request.auth_session = auth_session
         response = withdraw(request)
         self.assertEquals(response,
                 {"savings": Decimal("50"), "checking": Decimal("30")})
@@ -192,10 +202,10 @@ class OpTest(_TransactionalFixture):
     def test_overdraft(self):
         auth_session = self._balance_fixture()
         request = testing.DummyRequest(params={
-                                    "auth_token": auth_session.token,
                                     "type": "checking",
                                     "amount": "100.00"
                                     }, method="POST")
+        request.auth_session = auth_session
         self.assertRaisesRegexp(
             exc.HTTPBadRequest,
             r"overdraft occurred",

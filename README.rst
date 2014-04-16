@@ -4,7 +4,8 @@ ATMCRAFT
 
 A demonstration Pyramid application written by Mike Bayer.
 
-For the corresponding Minecraft Bukkit plugin, see https://bitbucket.org/zzzeek/pycon2014_atmcraft_java/.
+For the corresponding Minecraft Bukkit plugin, see
+https://bitbucket.org/zzzeek/pycon2014_atmcraft_java/.
 
 This program runs a simple web service which accepts
 commands regarding "bank accounts".
@@ -25,3 +26,38 @@ The key database entities are:
 
 * Transaction - represents a change in value to a specific AccountBalance
 
+Usage
+-----
+
+- Clone the repository::
+
+    git clone //bitbucket.org/zzzeek/pycon2014_atmcraft.git
+    cd pycon2014_atmcraft
+
+- Create a virtualenv::
+
+    VENV=$(pwd)/venv
+    virtualenv-2.7 $VENV
+
+- Install the package and its dependencies::
+
+    $VENV/bin/pip install -e .[tests]
+
+- Update the ``development.ini`` to contain a valid connection string by either
+  creating the user ``scott`` with password ``tiger`` or modifying the url.
+
+- Create the postgresql database::
+
+    createdb -O scott atmcraft
+
+- Initialize the database::
+
+    $VENV/bin/alembic -c development.ini upgrade head
+
+- Execute the tests::
+
+    TEST_INI=$(pwd)/development.ini $VENV/bin/nosetests
+
+- Run the server::
+
+    $VENV/bin/pserve development.ini

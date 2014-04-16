@@ -8,14 +8,21 @@ requires = [
     'pyramid',
     'pyramid_debugtoolbar',
     'pyramid_simpleform',
+    'pyramid_tm',
+    'zope.sqlalchemy',
+    'decorator',
     'formencode',
     'waitress',
     'bcrypt',
     'sqlalchemy >= 0.9.3dev',
     'alembic >= 0.6.3',
     'psycopg2',
-    'decorator'
     ]
+
+tests_require = [
+    'nose',
+    'mock',
+]
 
 setup(name='atmcraft',
       version='1.0',
@@ -34,7 +41,8 @@ setup(name='atmcraft',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      tests_require=["nose", "mock"],
+      tests_require=tests_require,
+      extras_require={'tests': tests_require},
       test_suite="atmcraft",
       entry_points = {
         'console_scripts': ['clientcfg = atmcraft.model.client:console'],

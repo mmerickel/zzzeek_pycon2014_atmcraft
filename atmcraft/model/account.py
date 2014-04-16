@@ -1,10 +1,12 @@
+from decimal import Decimal
+import uuid
+
+from sqlalchemy.orm import object_session
+
 from .meta import Base, SurrogatePK, \
             Column, attribute_mapped_collection, String,\
-            Amount, GUID, UniqueMixin, Session, \
+            Amount, GUID, UniqueMixin, \
             one_to_many, many_to_one
-
-import uuid
-from decimal import Decimal
 
 class Account(UniqueMixin, SurrogatePK, Base):
     __tablename__ = 'account'
@@ -29,7 +31,8 @@ class Account(UniqueMixin, SurrogatePK, Base):
         self.username = username
 
     def add_transaction(self, client, type_, amount):
-        balance_type = BalanceType.as_unique(Session(), type_)
+        db = object_session(self)
+        balance_type = BalanceType.as_unique(db, type_)
 
         if balance_type in self.balances:
             account_balance = self.balances[balance_type]
@@ -42,7 +45,7 @@ class Account(UniqueMixin, SurrogatePK, Base):
                 amount=amount,
                 client=client
             )
-        Session.add(trans)
+        db.add(trans)
         account_balance.last_trans_id = trans.trans_id
         account_balance.balance += amount
         if account_balance.balance < Decimal("0"):

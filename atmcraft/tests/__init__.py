@@ -1,21 +1,20 @@
-from ..model.meta import Session, setup_from_file
-from ._mock_session import MockSession
+import mock
+import os
 import pkg_resources
 import unittest
 
-def setup_package():
-    """Set up configuration and a testing engine.
+from sqlalchemy.orm import Session
 
-    Run by nosetests when the test suite starts.
+from ..model.meta import get_engine
+from ..util import setup_from_file
+from ._mock_session import MockSession
 
-    """
-
-    fname = pkg_resources.resource_filename("atmcraft", "../development.ini")
-    setup_from_file(fname)
-
+config_file = (
+    os.environ.get('TEST_INI') or
+    pkg_resources.resource_filename("atmcraft", "../development.ini"))
 
 class AppTest(unittest.TestCase):
-    pass
+    settings = setup_from_file(config_file)
 
 class TransactionalTest(AppTest):
     """Run tests against a relational database within a transactional boundary.
@@ -23,19 +22,16 @@ class TransactionalTest(AppTest):
 
     def setUp(self):
         super(TransactionalTest, self).setUp()
-        from ..model.meta.base import engine
+        engine = get_engine(self.settings)
         self.connection = engine.connect()
         self.transaction = self.connection.begin()
-        self.session = Session(bind=self.connection)
+        self.db = Session(bind=self.connection)
 
     def tearDown(self):
-        Session.remove()
-
         self.transaction.rollback()
         self.connection.close()
-        self.session.close()
+        self.db.close()
         super(TransactionalTest, self).tearDown()
-
 
 
 class MockDatabaseTest(AppTest):
@@ -43,8 +39,13 @@ class MockDatabaseTest(AppTest):
 
     def setUp(self):
         super(MockDatabaseTest, self).setUp()
-        Session.registry.set(MockSession())
+        self.db = MockSession()
+
+        self.object_session_patcher = mock.patch(
+            'atmcraft.model.account.object_session')
+        self.object_session = self.object_session_patcher.start()
+        self.object_session.return_value = self.db
 
     def tearDown(self):
-        Session.remove()
         super(MockDatabaseTest, self).tearDown()
+        self.object_session_patcher.stop()

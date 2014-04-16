@@ -1,15 +1,15 @@
-from pyramid.view import view_config
-import pyramid.httpexceptions as exc
-from decorator import decorator
-from .model.client import AuthSession
-from formencode import Schema, validators
-from pyramid_simpleform import Form
-from . import util
-from .model.meta import commit_on_success, Session
 from decimal import Decimal
-import logging
 
-log = logging.getLogger(__name__)
+from decorator import decorator
+from formencode import Schema, validators
+from pyramid import httpexceptions as exc
+from pyramid.view import view_config
+from pyramid_simpleform import Form
+
+from .model.client import AuthSession
+from . import util
+
+log = __import__('logging').getLogger(__name__)
 
 class StartSessionForm(Schema):
     identifier = validators.String(max=100)
@@ -23,12 +23,17 @@ class DepositWithdrawForm(Schema):
     amount = util.DecimalNumber(min=Decimal("0"))
 
 @decorator
-def auth_on_token(fn, request):
+def auth_on_token(fn, context, request):
     """Check for a valid AuthSession for this user.
 
     While Pyramid supplies a much more comprehensive system
     of doing auth/access control, we're keeping it very simple
     here for the purposes of demonstration.
+
+    We will attach this to views using
+    ``view_config(..., decorator=auth_on_token)``. This syntax allows us to
+    attach the decorator to class-based and function-based views with the same
+    (context, request) signature on the decorator.
 
     """
     try:
@@ -36,14 +41,13 @@ def auth_on_token(fn, request):
     except KeyError:
         raise exc.HTTPForbidden("auth_token is required")
     else:
-        session = AuthSession.validate_token(auth_token)
+        session = AuthSession.validate_token(request.db, auth_token)
         if session is None:
             raise exc.HTTPForbidden("no session for given auth_token")
         request.auth_session = session
-        return fn(request)
+        return fn(context, request)
 
 @view_config(route_name='start_session', renderer='json')
-@commit_on_success
 def start_session(request):
     form = Form(request,
                 schema=StartSessionForm())
@@ -51,7 +55,8 @@ def start_session(request):
         identifier = form.data["identifier"]
         secret = form.data["secret"]
         account_name = form.data["account_name"]
-        session = AuthSession.create(identifier, secret, account_name)
+        db = request.db
+        session = AuthSession.create(db, identifier, secret, account_name)
         if session is None:
             raise exc.HTTPForbidden()
         else:
@@ -61,21 +66,16 @@ def start_session(request):
     else:
         raise exc.HTTPForbidden()
 
-@view_config(route_name='balance', renderer='json')
-@auth_on_token
+@view_config(route_name='balance', renderer='json', decorator=auth_on_token)
 def balance(request):
     auth_session = request.auth_session
     return _balances(auth_session.account)
 
-@view_config(route_name='withdraw', renderer='json')
-@auth_on_token
-@commit_on_success
+@view_config(route_name='withdraw', renderer='json', decorator=auth_on_token)
 def withdraw(request):
     return _withdraw_or_deposit(request, True)
 
-@view_config(route_name='deposit', renderer='json')
-@auth_on_token
-@commit_on_success
+@view_config(route_name='deposit', renderer='json', decorator=auth_on_token)
 def deposit(request):
     return _withdraw_or_deposit(request, False)
 
@@ -104,9 +104,7 @@ def _withdraw_or_deposit(request, withdraw):
                         form.data["amount"], form.data["type"])
         except ValueError as err:
             raise exc.HTTPBadRequest(str(err))
-        else:
-            Session.commit()
-            return _balances(auth_session.account)
+
+        return _balances(auth_session.account)
     else:
         raise exc.HTTPBadRequest()
-
